@@ -71,53 +71,42 @@ var chirps = ee.ImageCollection('UCSB-CHG/CHIRPS/DAILY')
   .filterBounds(agnebyBasin)
   .filterDate(startDate, endDate);
 
-// Précipitations annuelles
-var annualPrecip = chirps.map(function(image) {
-  var year = ee.Date(image.get('system:time_start')).get('year');
-  return image.set('year', year);
+print('Nombre d\'images de précipitations:', chirps.size());
+
+// Précipitations totales sur la période
+var totalPrecip = chirps.sum().clip(agnebyBasin);
+var precipStats = totalPrecip.reduceRegion({
+  reducer: ee.Reducer.mean(),
+  geometry: agnebyBasin,
+  scale: 5566,
+  maxPixels: 1e13
 });
 
-var yearlyPrecip = annualPrecip.reduceColumns({
-  selectors: ['precipitation'],
-  reducer: ee.Reducer.sum().group({
-    fields: ['year'],
-    groupName: 'year'
-  })
-});
+print('Précipitation totale moyenne (mm):', precipStats);
 
-print('Précipitations annuelles:', yearlyPrecip);
-
-// Précipitations mensuelles moyennes
-var monthlyPrecip = chirps.map(function(image) {
-  var month = ee.Date(image.get('system:time_start')).get('month');
-  return image.set('month', month);
-});
-
-var monthlyMean = monthlyPrecip.reduceColumns({
-  selectors: ['precipitation'],
-  reducer: ee.Reducer.mean().group({
-    fields: ['month'],
-    groupName: 'month'
-  })
-});
-
-print('Précipitations mensuelles moyennes:', monthlyMean);
-
-// Créer un graphique des précipitations annuelles
+// Créer un graphique des précipitations mensuelles (période réduite pour éviter trop de points)
+var chirpsRecent = chirps.filterDate('2020-01-01', '2024-12-31');
 var precipChart = ui.Chart.image.series({
-  imageCollection: chirps,
+  imageCollection: chirpsRecent,
   region: agnebyBasin,
   reducer: ee.Reducer.mean(),
   scale: 5566,
   xProperty: 'system:time_start'
 }).setOptions({
-  title: 'Précipitations mensuelles - Bassin de l\'Agnéby (2000-2024)',
-  vAxis: {title: 'Précipitation (mm)'},
+  title: 'Précipitations journalières - Bassin de l\'Agnéby (2020-2024)',
+  vAxis: {title: 'Précipitation (mm/jour)'},
   hAxis: {title: 'Date'},
-  pointSize: 3
+  pointSize: 1
 });
 
 print(precipChart);
+
+// Afficher la couche de précipitations totales
+Map.addLayer(totalPrecip, {
+  min: 0,
+  max: 5000,
+  palette: ['white', 'blue', 'darkblue']
+}, 'Précipitations totales (2000-2024)', false);
 
 // ===== 3. DÉTECTION DES INONDATIONS HISTORIQUES =====
 
@@ -207,10 +196,10 @@ Export.image.toDrive({
 
 print('=== 5. ANALYSE DES TENDANCES CLIMATIQUES ===');
 
-// Utiliser ERA5 pour la température
+// Utiliser ERA5 pour la température (période réduite)
 var era5 = ee.ImageCollection('ECMWF/ERA5_LAND/MONTHLY')
   .filterBounds(agnebyBasin)
-  .filterDate(startDate, endDate)
+  .filterDate('2020-01-01', '2024-12-31')
   .select('temperature_2m');
 
 var tempChart = ui.Chart.image.series({
@@ -220,7 +209,7 @@ var tempChart = ui.Chart.image.series({
   scale: 9000,
   xProperty: 'system:time_start'
 }).setOptions({
-  title: 'Température mensuelle - Bassin de l\'Agnéby (2000-2024)',
+  title: 'Température mensuelle - Bassin de l\'Agnéby (2020-2024)',
   vAxis: {title: 'Température (K)'},
   hAxis: {title: 'Date'},
   pointSize: 3
@@ -261,21 +250,27 @@ print('=== 7. PRÉPARATION DES DONNÉES POUR ML ===');
 // Créer un échantillonnage pour l'entraînement
 var samplePoints = ee.FeatureCollection.randomPoints(agnebyBasin, 1000);
 
-// Extraire les valeurs aux points d'échantillonnage
-var features = s2Composite.sampleRegions({
-  collection: samplePoints,
+// Extraire les valeurs aux points d'échantillonnage avec une approche plus simple
+var features = s2Composite.sample({
+  region: agnebyBasin,
   scale: 10,
-  properties: ['NDVI', 'NDWI', 'B2', 'B3', 'B4', 'B8']
+  numPixels: 1000,
+  dropNulls: true
 });
 
 print('Échantillons pour ML:', features.size());
 
-// Exporter les échantillons
-Export.table.toDrive({
-  collection: features,
-  description: 'agneby_ml_samples',
-  fileFormat: 'CSV'
-});
+// Exporter les échantillons si disponibles
+if (features.size().getInfo() > 0) {
+  Export.table.toDrive({
+    collection: features,
+    description: 'agneby_ml_samples',
+    fileFormat: 'CSV'
+  });
+  print('Export ML lancé');
+} else {
+  print('Pas assez d\'échantillons - vérifiez la couche Sentinel-2');
+}
 
 print('=== ANALYSE TERMINÉE ===');
 print('Vérifiez l\'onglet Tasks pour les exports');
