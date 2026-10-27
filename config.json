@@ -1,0 +1,99 @@
+{
+  "project": {
+    "name": "Projet de Détection d'Inondations",
+    "version": "1.0",
+    "description": "Scripts et documentation pour la détection d'inondations avec Google Earth Engine et Sentinel"
+  },
+  "earth_engine": {
+    "url": "https://code.earthengine.google.com/",
+    "collections": {
+      "sentinel1": "COPERNICUS/S1_GRD",
+      "sentinel2": "COPERNICUS/S2_SR_HARMONIZED"
+    },
+    "default_settings": {
+      "crs": "EPSG:4326",
+      "scale": 10,
+      "max_pixels": 10000000000000
+    }
+  },
+  "sentinel1": {
+    "description": "Données radar SAR",
+    "resolution": "10m",
+    "revisit_time": "6 jours",
+    "polarizations": ["VV", "VH", "HH", "HV"],
+    "modes": ["IW", "EW", "SM"],
+    "default_mode": "IW",
+    "default_polarization": "VV",
+    "water_threshold": {
+      "min": -25,
+      "max": -10,
+      "recommended": -16
+    }
+  },
+  "sentinel2": {
+    "description": "Données optiques multispectrales",
+    "resolution": "10m-60m",
+    "revisit_time": "5 jours",
+    "bands": {
+      "B2": "Blue",
+      "B3": "Green",
+      "B4": "Red",
+      "B8": "NIR",
+      "B11": "SWIR1",
+      "B12": "SWIR2"
+    },
+    "indices": {
+      "NDWI": {
+        "formula": "(Green - NIR) / (Green + NIR)",
+        "bands": ["B3", "B8"],
+        "threshold": 0.3
+      },
+      "MNDWI": {
+        "formula": "(Green - SWIR) / (Green + SWIR)",
+        "bands": ["B3", "B11"],
+        "threshold": 0.3
+      }
+    },
+    "cloud_filter": {
+      "max_percentage": 20
+    }
+  },
+  "example_regions": {
+    "nil_delta": {
+      "name": "Delta du Nil (Égypte)",
+      "geometry": [31.0, 30.0, 32.0, 31.5],
+      "description": "Zone deltaïque propice aux inondations"
+    },
+    "amazon_basin": {
+      "name": "Bassin amazonien (Brésil)",
+      "geometry": [-60.0, -5.0, -55.0, -2.0],
+      "description": "Zone tropicale avec inondations saisonnières"
+    },
+    "bangladesh": {
+      "name": "Bangladesh",
+      "geometry": [89.0, 23.0, 91.0, 25.0],
+      "description": "Zone fortement sujette aux inondations"
+    },
+    "mississippi": {
+      "name": "Fleuve Mississippi (USA)",
+      "geometry": [-91.0, 29.0, -89.0, 31.0],
+      "description": "Vallée fluviale avec risques d'inondation"
+    },
+    "senegal_river": {
+      "name": "Fleuve Sénégal",
+      "geometry": [-16.0, 15.0, -14.0, 17.0],
+      "description": "Vallée du fleuve Sénégal"
+    }
+  },
+  "export_settings": {
+    "format": "GeoTIFF",
+    "drive_folder": "EarthEngineExports",
+    "description_prefix": "flood_"
+  },
+  "tips": {
+    "threshold_adjustment": "Ajustez les seuils selon votre région et la saison",
+    "cloud_coverage": "Pour Sentinel-2, essayez de limiter la couverture nuageuse à < 20%",
+    "temporal_analysis": "Utilisez plusieurs dates pour valider vos résultats",
+    "validation": "Comparez avec des données de terrain quand possible"
+  }
+}
