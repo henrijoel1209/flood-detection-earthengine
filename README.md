@@ -9,6 +9,7 @@ Ce projet contient des scripts pour l'analyse et la détection d'inondations en 
 - [Structure du projet](#structure-du-projet)
 - [Scripts disponibles](#scripts-disponibles)
 - [Guide d'utilisation](#guide-dutilisation)
+- [Utiliser depuis GitHub](#utiliser-depuis-github)
 - [Créer une plateforme interactive](#créer-une-plateforme-interactive)
 - [Concepts de base](#concepts-de-base)
 - [Ressources utiles](#ressources-utiles)
@@ -218,6 +219,23 @@ Pour transformer vos scripts en une application web interactive partageable, con
 4. Collez dans le nouveau fichier
 5. Cliquez sur **Run**
 6. Cliquez sur **Publish** pour partager
+
+## 📥 Utiliser depuis GitHub
+
+Vos scripts sont stockés sur GitHub: https://github.com/henrijoel1209/flood-detection-earthengine
+
+### Méthode simple: Copier/Coller
+
+1. Allez sur votre dépôt GitHub
+2. Naviguez vers le dossier `scripts/`
+3. Cliquez sur le script voulu
+4. Cliquez sur le bouton **Copy** (en haut à droite)
+5. Ouvrez Google Earth Engine
+6. Créez un nouveau script (File > New)
+7. Collez le code (Ctrl+V)
+8. Cliquez sur Run
+
+Pour plus de détails, consultez le guide: <ref_file file="D:\TELECHARGEMENT\projet\docs\guide_github_earthengine.md" />
 
 ### Étape 6: Exporter les résultats
 
